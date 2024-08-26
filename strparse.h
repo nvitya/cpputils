@@ -28,6 +28,10 @@
 #ifndef __STRPARSE_H_
 #define __STRPARSE_H_
 
+#include <string>
+
+using namespace std;
+
 class TStrParseObj
 {
   public:
@@ -40,6 +44,7 @@ class TStrParseObj
     int prevlen;       // usually signs token length
 
     char commentmarker = '#';
+    char float_decimal_point = '.';
 
     TStrParseObj();
     TStrParseObj(char * astr, int buflen = 0);
@@ -55,13 +60,16 @@ class TStrParseObj
     bool ReadAlphaNum();             // sets prevptr, prevlen
     bool ReadDecimalNumbers();       // sets prevptr, prevlen
     bool ReadHexNumbers();           // sets prevptr, prevlen
+    bool ReadFloatNum();             // sets prevptr, prevlen
     bool ReadQuotedString();
     bool CheckSymbol(const char * checkstring);
     bool SearchPattern(const char * checkchars);  // sets prevptr, prevlen
 
+    string PrevStr();
     bool UCComparePrev(const char * checkstring);
     int PrevToInt();
     unsigned PrevHexToInt();
+    double PrevToFloat();
 
 
     int GetLineNum(const char * pos);
@@ -73,5 +81,6 @@ typedef TStrParseObj *  PStrParseObj;
 bool PCharUCCompare(char * * ReadPtr, int len, const char * checkstring);
 int PCharToInt(char * ReadPtr, int len);
 unsigned PCharHexToInt(char * ReadPtr, int len);
+double PCharToFloat(char * ReadPtr, int len);
 
 #endif

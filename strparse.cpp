@@ -28,6 +28,7 @@
 #include "strparse.h"
 #include "string.h"
 #include <strings.h>
+#include "math.h"
 
 TStrParseObj::TStrParseObj()
 {
@@ -328,6 +329,37 @@ bool TStrParseObj::ReadHexNumbers()
   return result;
 }
 
+bool TStrParseObj::ReadFloatNum()
+{
+  char * cp = readptr;
+  bool result = false;
+
+  prevptr = readptr;
+
+  while (cp < bufend)
+  {
+    char c = *cp;
+
+    if (
+        ((c >= '0') && (c <= '9'))
+        || (c == float_decimal_point) || (c == '-') || ('+' == c) || ('e' == c) || ('E' == c)
+       )
+    {
+      result = true;
+      ++cp;
+    }
+    else
+    {
+      break;
+    }
+  }
+
+  prevlen = cp - readptr;
+  readptr = cp;
+
+  return result;
+}
+
 bool TStrParseObj::ReadQuotedString()
 {
   if (readptr >= bufend)
@@ -352,6 +384,12 @@ bool TStrParseObj::ReadQuotedString()
   return true;
 }
 
+string TStrParseObj::PrevStr()
+{
+  string result(prevptr, prevlen);
+  return result;
+}
+
 bool TStrParseObj::UCComparePrev(const char * checkstring)
 {
   return PCharUCCompare(&prevptr, prevlen, checkstring);
@@ -366,6 +404,12 @@ unsigned TStrParseObj::PrevHexToInt()
 {
   return PCharHexToInt(prevptr, prevlen);
 }
+
+double TStrParseObj::PrevToFloat()
+{
+  return PCharToFloat(prevptr, prevlen);
+}
+
 
 int TStrParseObj::GetLineNum(const char * pos)
 {
@@ -434,6 +478,76 @@ int PCharToInt(char * ReadPtr, int len)
   }
 
   return result;
+}
+
+double PCharToFloat(char * ReadPtr, int len)
+{
+  if (len < 1)
+  {
+  	return 0.0;
+  }
+
+  char * pc = ReadPtr;
+  char * pend = ReadPtr + len;
+
+  double nsign = 1.0;
+  double esign = 1.0;
+  double fracmul = 1.0;
+  //double digit = 0.0;
+  double nv = 0.0;
+  double ev = 0.0;
+  double digit;
+
+  int mode = 0; // 0 = integer part, 1 = fractional part, 2 = exponent
+  char c;
+
+  while (pc < pend)
+  {
+    c = *pc;
+    if ('+' == c)
+    {
+      if (2 == mode)  esign = 1.0;
+      else            nsign = 1.0;
+    }
+    else if ('-' == c)
+    {
+      if (2 == mode)  esign = -1.0;
+      else            nsign = -1.0;
+    }
+    else if ((c >= '0') and (c <= '9'))
+    {
+      digit = c - '0';
+      if (1 == mode) // fractional part
+      {
+        fracmul = fracmul * 0.1;
+        nv = nv + digit * fracmul;
+      }
+      else if (2 == mode)  // exponential integer
+      {
+        ev = ev * 10 + digit;
+      }
+      else  // integer part
+      {
+        nv = nv * 10 + digit;
+      }
+    }
+    else if (('.' == c) || (',' == c))
+    {
+      mode = 1; // change to fractional mode
+    }
+    else if (('e' == c) or ('E' == c))
+    {
+      mode = 2; // change to exponential mode
+    }
+    else
+    {
+      break;  // unhandled character
+    };
+
+    ++pc;
+  }
+
+  return nsign * nv * pow(10, esign * ev);
 }
 
 unsigned PCharHexToInt(char * ReadPtr, int len)

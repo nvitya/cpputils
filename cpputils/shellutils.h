@@ -43,7 +43,8 @@ public:
 
   int Run(const char * pcmd);      // start, wait until finishes
   int StartBg(const char * pcmd);  // starts in the background
-  int RunWithInput(const char * pcmd, const string& input);
+  int StartBgWithInput(const char * pcmd, const string & input);  // starts in the background
+  int RunWithInput(const char * pcmd, const string & input);
 
   bool Finished();
   bool WaitFinishMs(int ms);

@@ -283,7 +283,33 @@ int OShellRunner::StartBg(const char * pcmd)
     return -1;
   }
 
-  thread([this]()
+  std::thread([this]()
+  {
+    MonitorProcess();
+  }).detach();
+
+  return 0;
+}
+
+int OShellRunner::StartBgWithInput(const char * pcmd, const string & input)
+{
+  out.clear();
+  err.clear();
+  output.clear();
+  exitcode = -1;
+  finished = false;
+  
+  provide_stdin = true;
+  in_buffer = input;
+  in_buffer_pos = 0;
+
+  if (StartProcess(pcmd) != 0)
+  {
+    finished = true;
+    return -1;
+  }
+
+  std::thread([this]()
   {
     MonitorProcess();
   }).detach();
